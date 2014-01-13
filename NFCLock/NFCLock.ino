@@ -4,6 +4,8 @@
 #include <EEPROM.h>
 
 #define PULSANTE   12               //pin relativo al pulsante da premere per entrare in modalità scrittura/cancellazione
+#define PSU   13                    //pin relativo al pulsante su
+#define PGIU   14                   //pin relativo al pulsante giu
 #define SERRATURA   8               //////////////////////////pin relativo allo sblocco della serratura
 #define GREEN_LED_PIN  5           //pin relativo al led verde
 #define RED_LED_PIN    6           //pin relativo al led rosso
@@ -12,9 +14,7 @@
 #define SAVE_MODE 1
 #define DELETE_MODE 2
 
-  
-/** define a nfc class */
-NFC_Module nfc;
+NFC_Module nfc;                   // define a nfc class 
 boolean check;                    //variabile con la quale eseguo tutti i controlli all'interno dello sketch
 int on_off=0;                     //variabile che utilizzo per controllare lo stato del led in modalità bistabile
 
@@ -103,18 +103,14 @@ void stampa_code(byte * code){
 void setup() {
   // put your setup code here, to run once:
   pinMode(SERRATURA,OUTPUT);                                               ////////////////////////Pin apertura 12 
- 
   pinMode(PULSANTE,INPUT);                                                 //imposto il pin del pulsante in modalità input per verificare quando il pulsante viene premuto
   digitalWrite(PULSANTE,HIGH);                                             //e lo setto alto, in modo tale da attivare la resistenza di pull-up
- 
   pinMode(GREEN_LED_PIN,OUTPUT);
   pinMode(RED_LED_PIN,OUTPUT);
-  
-  Serial.begin(9600);                                                       //inizializzo la seriale sulla quale leggo i dati delle schede a 9600 baud
-
+  Serial.begin(9600);                                                       //inizializzo la seriale sulla quale leggo i dati delle schede a 9600 bau
   if(digitalRead(PULSANTE)==HIGH) azzera(); 
   nfc.begin();
-  
+ 
   uint32_t versiondata = nfc.get_version();
   if (! versiondata) {
     Serial.print("Didn't find PN53x board");
@@ -130,21 +126,13 @@ void setup() {
   nfc.SAMConfiguration();
   ledForIdle();
 }
-
-
-
-void loop() {
-  
+    
+    void leggireset(){
     unsigned long int tempo=0;
     unsigned long int tempoFinale=0;
-    
-    boolean buttonWasPressed = false;
-    
-    
-    
-                                  //controllo se il pulsante è premuto
-     tempo=millis();
-     tempoFinale = tempo;     //se lo è salvo gli attuali millisecondi passati dall'avvio del dispositivo
+    boolean buttonWasPressed = false;    //controllo se il pulsante è premuto
+    tempo=millis();
+    tempoFinale = tempo;     //se lo è salvo gli attuali millisecondi passati dall'avvio del dispositivo
 
     
      
@@ -186,7 +174,7 @@ void loop() {
      Serial.println("Uscito da ciclo di attesa!");
 
     if (buttonWasPressed)
-    {
+      {
       Serial.println("Bottone premuto");
       if (currentMode == IDLE_MODE && lastMode == IDLE_MODE) 
       {
@@ -209,17 +197,26 @@ void loop() {
       }
     }
 
+
+}
+
+
+
+
+
+void leggitag()
+{
  u8 buf[32],sta; 
 
  // do{                                                                //inizio un ciclo che finirà solo quando verrà premuto nuovamente il pulsante
  
-    /** Polling the mifar card, buf[0] is the length of the UID */
+    // Polling the mifar card, buf[0] is the length of the UID //
     sta = nfc.InListPassiveTarget(buf);
     
   //  digitalWrite(SERRATURA,HIGH);                              //INTEGRAZIONE APRIPORTA Chiudo apriporta se esco dal loop pulsante premuto fra l'istante 10-50 mills
    
     if(sta && buf[0] == 4){
-    /** the card may be Mifare Classic card, try to read the block */  
+    // the card may be Mifare Classic card, try to read the block //  
     Serial.print("UUID length:");
     Serial.print(buf[0], DEC);
     Serial.println();
@@ -227,17 +224,21 @@ void loop() {
     nfc.puthex(buf+1, buf[0]);
     Serial.println();
     
-    /** factory default KeyA: 0xFF 0xFF 0xFF 0xFF 0xFF 0xFF */
+    // factory default KeyA: 0xFF 0xFF 0xFF 0xFF 0xFF 0xFF //
     u8 key[6] = {0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF};
     u8 blocknum = 4;
-    /** Authentication blok 4 */
+    // Authentication blok 4 //
     sta = nfc.MifareAuthentication(0, blocknum, buf+1, buf[0], key);
     if(sta){
       Serial.println("Autenticazione OK");
-      /** save read block data */                                                           //se lo è passo a controllare se devo salvare o cancellare
+      // save read block data                                                           //se lo è passo a controllare se devo salvare o cancellare
             check=false;  
             //rimetto a false la variabile check per successivi utilizzi
             Serial.println("Controllo modalita");
+
+
+
+            
             if(currentMode == SAVE_MODE){                                         //controllo se devo scrivere
                   Serial.println("SALVO IL TAG");
                   for(int i=0;i<1021;i+=4){                                   //in caso affermativo eseguo un ciclo che controlla tutta la EEPROM
@@ -279,6 +280,8 @@ void loop() {
 
  
     }  else if(currentMode == DELETE_MODE){                                      //se non bisogna salvare, controllo se bisogna eliminare una tessera
+ 
+                 
                   Serial.println("CANCELLO IL TAG");
                   int posizione=-1;                                            //quindi inizializzo a -1 la variabile posizione, che mi servirà per salvare la posizione nella EEPROM della tessera
                   Serial.println("");
@@ -341,4 +344,17 @@ void loop() {
                         }
                       delay(500); 
     }
+}
+
+void leggippsg() {
+}
+
+void stampadisplay()  {
+}
+
+void loop() {
+  stampadisplay();   // richiama la stampa su display in base alle variabili che arrivano da leggippsg(), leggireset(), save(), delete() ecc.
+  leggireset();      // conta il tempo del reset. Se sopra i 2 sec conta il tempo senza pressione ed entra in save/delete. se nessun tasto premuto x 1 min o seve delete concluse  si esce
+  leggippsg();       // conta il tempo trascorso dalla pressione dei tasti su e giu e valuta cosa far stamapare da stampadisplay()
+  leggitag();        // verifica la scheda letta, verifica quelle in memoria e tramite variabili da leggireset salva o cancella eeprom. può richiamare apriporta.
 }
