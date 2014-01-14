@@ -104,6 +104,8 @@ void setup() {
   // put your setup code here, to run once:
   pinMode(SERRATURA,OUTPUT);                                               ////////////////////////Pin apertura 12 
   pinMode(PULSANTE,INPUT);                                                 //imposto il pin del pulsante in modalità input per verificare quando il pulsante viene premuto
+  pinMode(PSU,INPUT);
+  pinMode(PGIU,INPUT);  
   digitalWrite(PULSANTE,HIGH);                                             //e lo setto alto, in modo tale da attivare la resistenza di pull-up
   pinMode(GREEN_LED_PIN,OUTPUT);
   pinMode(RED_LED_PIN,OUTPUT);
@@ -347,13 +349,87 @@ void leggitag()
 }
 
 void leggippsg() {
+    unsigned long int tempo=millis();
+    boolean buttonWasPressed = false;    //controllo se il pulsante è premuto
+    unsigned long int tempartenza;
+    if(digitalRead(PSU)==HIGH&&(PGIU)==LOW){
+    int pag=pag-1;
+    delay (20);
+    tempartenza=tempo;
+    }
+    if(digitalRead(PSU)==LOW&&(PGIU)==HIGH){
+    int pag=pag+1;
+    delay (20);
+    tempartenza=tempo;
+    }
+    if(tempo-tempartenza>10000) int pag=0;
+    //PERCHE' QUESTO COMANDO MI DA ERRORE? if(pag>10&&pag<15) int pag=1;
+    //PERCHE' QUESTO COMANDO MI DA ERRORE? if(pag<0) int pag=10;
+    if(digitalRead(PSU)==HIGH&&(PGIU)==HIGH){
+    unsigned long int pag=15;
+    pag=0;
+    tempartenza=tempo;
+    }
 }
 
 void stampadisplay()  {
+  int pag;
+  switch (pag) {  
+      case 0:
+      Serial.println("min:ora - giorno/mese/anno");
+      Serial.println("TAG REGISTRATI ""numtagssaved");
+      break;
+      case 1:
+      Serial.println("1) TAG""ntag" "min:ora - giorno/mese/anno");
+      Serial.println("2) TAG""ntag" "min:ora - giorno/mese/annp");
+      break;
+      case 2:
+      Serial.println("2) TAG""ntag" "min:ora - giorno/mese/anno");
+      Serial.println("3) TAG""ntag" "min:ora - giorno/mese/annp");
+      break;
+      case 3:
+      Serial.println("3) TAG""ntag" "min:ora - giorno/mese/anno");
+      Serial.println("4) TAG""ntag" "min:ora - giorno/mese/annp");
+      break;
+      case 4:
+      Serial.println("4) TAG""ntag" "min:ora - giorno/mese/anno");
+      Serial.println("5) TAG""ntag" "min:ora - giorno/mese/annp");
+      break;
+      case 5:
+      Serial.println("5) TAG""ntag" "min:ora - giorno/mese/anno");
+      Serial.println("6) TAG""ntag" "min:ora - giorno/mese/annp");
+      break;
+      case 6:
+      Serial.println("6) TAG""ntag" "min:ora - giorno/mese/anno");
+      Serial.println("7) TAG""ntag" "min:ora - giorno/mese/annp");
+      break;
+      case 7:
+      Serial.println("7) TAG""ntag" "min:ora - giorno/mese/anno");
+      Serial.println("8) TAG""ntag" "min:ora - giorno/mese/annp");
+      break;
+      case 8:
+      Serial.println("8) TAG""ntag" "min:ora - giorno/mese/anno");
+      Serial.println("9) TAG""ntag" "min:ora - giorno/mese/annp");
+      break;
+      case 9:
+      Serial.println("9) TAG""ntag" "min:ora - giorno/mese/anno");
+      Serial.println("10) TAG""ntag" "min:ora - giorno/mese/annp");
+      break;
+      case 10:
+      Serial.println("10) TAG""ntag" "min:ora - giorno/mese/anno");
+      Serial.println("1) TAG""ntag" "min:ora - giorno/mese/annp");
+      break;
+      case 15:
+      Serial.println("PREMERE RESET 1 SECONDO PER");
+      Serial.println("SALVARE/CANCELLARE TAGS");
+      delay (2000);
+      break;
+
+      }
 }
 
 void loop() {
-  stampadisplay();   // richiama la stampa su display in base alle variabili che arrivano da leggippsg(), leggireset(), save(), delete() ecc.
+  stampadisplay();   // richiama la stampa su display in fase di loop in base a variabili che arrivano da lettura tag, leggippsg(), ecc.
   leggireset();      // conta il tempo del reset. Se sopra i 2 sec conta il tempo senza pressione ed entra in save/delete. se nessun tasto premuto x 1 min o seve delete concluse  si esce
   leggippsg();       // conta il tempo trascorso dalla pressione dei tasti su e giu e valuta cosa far stamapare da stampadisplay()
   leggitag();        // verifica la scheda letta, verifica quelle in memoria e tramite variabili da leggireset salva o cancella eeprom. può richiamare apriporta.
