@@ -1,4 +1,4 @@
-stevalenr
+NFC-Lock
 =========
 
-Repository usato per il codice dei nostri progetti con Arduino 
+Si tratta di un semplice progetto che aziona una serratura elettromeccanica a seguito di riconoscimento avvenuto mediante lettura di TAG NFC.
